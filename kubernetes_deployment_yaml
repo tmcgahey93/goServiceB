@@ -1,0 +1,86 @@
+# Namespace
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: primaryNamespace
+
+---
+# ConfigMap
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: goserviceb-config
+  namespace: primaryNamespace
+data:
+  ENV: "Production"
+  TEST_VARIABLE: "PRODUCTION_ENVIRONMENT"
+  SERVICE_B_URL: "http://service-b"
+
+---
+
+# Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: goserviceb-deployment
+  namespace: primaryNamespace
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: goserviceb
+  template:
+    metadata:
+      labels:
+        app: goserviceb
+    spec:
+      containers:
+      - name: goserviceb
+        image: goserviceb:latest
+        ports:
+        - containerPort: 8081
+        envFrom:
+        - configMapRef:
+            name: goserviceb-config
+
+---
+
+# Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: goserviceb-service
+  namespace: primaryNamespace
+spec:
+  type: LoadBalancer
+  selector:
+    app: goserviceb
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 8081
+
+---
+
+# DaemonSet 
+#apiVersion: apps/v1
+#kind: DaemonSet
+#metadata:
+#  name: example-daemonset
+#  namespace: daemonset
+#  labels:
+#    app: example-daemon
+#spec:
+#  selector:
+#    matchLabels:
+#      app: example-daemon
+#  template:
+#    metadata:
+#      labels:
+#        app: example-daemon
+#    spec:
+#      containers:
+#      - name: example-container
+#        image: gorestcontroller:latest
+#        ports:
+#        - containerPort: 8080
