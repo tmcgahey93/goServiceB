@@ -5,8 +5,20 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
+
+var requestCount = prometheus.NewCounter(
+	prometheus.CounterOpts{
+		Name: "myapp_http_requests_total",
+		Help: "Total number of HTTP requests",
+	},
+)
+
+func init() {
+	prometheus.MustRegister(requestCount)
+}
 
 func main() {
 
@@ -22,4 +34,5 @@ func main() {
 func serviceBHandler(w http.ResponseWriter, r *http.Request) {
 	returnMessage := "Hello from Service B"
 	fmt.Fprintln(w, returnMessage)
+	requestCount.Inc() // increment by 1
 }
